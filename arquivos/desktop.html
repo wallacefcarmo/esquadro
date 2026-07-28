@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Esquadro — Protótipo · BNG Metalmecânica</title>
+<style>
+  :root{
+    --ink:#0F2C4C; --ink2:#17416B; --steel:#35709E;
+    --amber:#F2A007; --amber-l:#FDF0D8;
+    --green:#1E9E62; --green-l:#E4F4EC;
+    --red:#C6493F; --red-l:#FBE9E7;
+    --canvas:#F1F4F7; --surface:#fff; --line:#DDE4EB;
+    --txt:#22303D; --muted:#657685;
+    --sans:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--canvas);color:var(--txt);font-size:14px;-webkit-font-smoothing:antialiased}
+  .app{display:flex;min-height:100vh}
+
+  /* ---------- sidebar ---------- */
+  .side{width:236px;flex:0 0 236px;background:var(--ink);color:#fff;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+  .brand{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.10)}
+  .brand h1{font-size:21px;letter-spacing:.5px;font-weight:700}
+  .brand h1 span{color:var(--amber)}
+  .brand p{font-size:11px;color:#8FA8BE;margin-top:3px}
+  .nav{padding:14px 12px;flex:1}
+  .nav button{width:100%;display:flex;align-items:center;gap:11px;background:none;border:0;color:#C7D7E5;
+    font:inherit;font-size:13.5px;text-align:left;padding:10px 12px;border-radius:7px;cursor:pointer;margin-bottom:3px}
+  .nav button:hover{background:rgba(255,255,255,.07);color:#fff}
+  .nav button.on{background:var(--ink2);color:#fff;font-weight:600}
+  .nav .ic{width:17px;height:17px;flex:0 0 17px;stroke:currentColor;fill:none;stroke-width:1.7}
+  .nav .grp{font-size:10px;letter-spacing:1.3px;color:#5E7C99;padding:16px 12px 7px;font-weight:700}
+  .who{padding:14px 18px;border-top:1px solid rgba(255,255,255,.10);font-size:12px;color:#8FA8BE}
+  .who b{display:block;color:#fff;font-size:13px;font-weight:600}
+
+  /* ---------- main ---------- */
+  .main{flex:1;min-width:0}
+  .top{background:var(--surface);border-bottom:1px solid var(--line);padding:16px 28px;display:flex;
+    align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .top h2{font-size:19px;color:var(--ink);font-weight:700}
+  .top p{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .wrap{padding:22px 28px 44px}
+  .screen{display:none}.screen.on{display:block}
+
+  /* ---------- bits ---------- */
+  .btn{border:1px solid var(--line);background:#fff;color:var(--txt);font:inherit;font-size:13px;
+    padding:8px 14px;border-radius:7px;cursor:pointer;font-weight:600}
+  .btn:hover{border-color:var(--steel);color:var(--ink)}
+  .btn.pri{background:var(--ink);border-color:var(--ink);color:#fff}
+  .btn.pri:hover{background:var(--ink2);border-color:var(--ink2)}
+  .btn.done{background:var(--green-l);border-color:#B9E2CD;color:#14663F;cursor:default}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+  .pad{padding:18px 20px}
+  .h3{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:2px}
+  .sub{font-size:12px;color:var(--muted)}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.4px;padding:3px 8px;border-radius:20px;white-space:nowrap}
+  .t-ok{background:var(--green-l);color:#14663F}
+  .t-warn{background:var(--amber-l);color:#8A5D06}
+  .t-bad{background:var(--red-l);color:#94302A}
+  .t-idle{background:#EDF1F5;color:#5C6B79}
+  .t-blue{background:#E4EEF7;color:#1B4C77}
+  .bar{height:7px;border-radius:5px;background:#E7ECF1;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:5px}
+  .grid{display:grid;gap:14px}
+  table{width:100%;border-collapse:collapse}
+  th{font-size:10.5px;letter-spacing:.8px;color:var(--muted);text-align:left;font-weight:700;
+    padding:0 12px 9px;border-bottom:1px solid var(--line)}
+  td{padding:12px;border-bottom:1px solid #EEF2F5;font-size:13px;vertical-align:middle}
+  tr:last-child td{border-bottom:0}
+  .mono{font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}
+
+  /* ---------- KPI ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:15px 17px}
+  .kpi .lab{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.3px}
+  .kpi .val{font-size:29px;font-weight:700;color:var(--ink);margin:5px 0 2px;font-variant-numeric:tabular-nums}
+  .kpi .val small{font-size:14px;color:var(--muted);font-weight:600}
+  .kpi .note{font-size:11.5px;color:var(--muted)}
+
+  /* ---------- programação ---------- */
+  .tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .tabs button{border:1px solid var(--line);background:#fff;color:var(--muted);font:inherit;font-size:13px;
+    font-weight:600;padding:7px 15px;border-radius:20px;cursor:pointer}
+  .tabs button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .plan{display:grid;grid-template-columns:1fr 292px;gap:16px;align-items:start}
+  .sched{overflow-x:auto}
+  .sched table{min-width:820px}
+  .sched th{padding:11px 10px;background:#F7F9FB;border-bottom:1px solid var(--line);white-space:nowrap}
+  .sched th:first-child{position:sticky;left:0;background:#F7F9FB;z-index:2;min-width:172px}
+  .sched td{padding:7px 9px;border-right:1px solid #EEF2F5;vertical-align:top;min-width:142px}
+  .sched td:first-child{position:sticky;left:0;background:#fff;z-index:1;font-weight:600;color:var(--ink);
+    font-size:12.5px;line-height:1.35;border-right:1px solid var(--line)}
+  .sched td:first-child em{display:block;font-style:normal;font-weight:500;color:var(--muted);font-size:11px;margin-top:2px}
+  .chip{background:#F4F7FA;border:1px solid #E1E8EF;border-left:3px solid var(--steel);border-radius:5px;
+    padding:6px 8px;margin-bottom:5px;font-size:11.5px;line-height:1.4;cursor:grab}
+  .chip:hover{border-color:var(--steel);background:#EDF3F8}
+  .chip b{color:var(--ink);font-size:11.5px}
+  .chip span{color:var(--muted);display:block}
+  .chip.mt{border-left-color:var(--red);background:var(--red-l);border-color:#F0CFCB}
+  .chip.mt b{color:#94302A}
+  .chip.free{border-left-color:var(--amber);background:#fff}
+  .empty{border:1px dashed #D8E0E8;border-radius:5px;padding:9px;text-align:center;color:#A9B7C4;font-size:11px}
+  .back{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .back .hd{padding:14px 16px;border-bottom:1px solid var(--line)}
+  .back .bd{padding:12px 16px;max-height:398px;overflow-y:auto}
+  .bitem{border:1px solid var(--line);border-radius:7px;padding:9px 11px;margin-bottom:8px;cursor:grab;background:#fff}
+  .bitem:hover{border-color:var(--steel)}
+  .bitem b{color:var(--ink);font-size:12.5px}
+  .bitem p{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+  .warn{background:var(--amber-l);border:1px solid #F3DFB4;border-radius:7px;padding:10px 12px;font-size:12px;
+    color:#7A5305;margin-bottom:9px;line-height:1.45}
+  .warn b{color:#5E4004}
+
+  /* ---------- celular ---------- */
+  .floor{display:grid;grid-template-columns:328px 1fr;gap:26px;align-items:start}
+  .phone{background:var(--ink);border-radius:26px;padding:11px;box-shadow:0 12px 34px rgba(15,44,76,.22)}
+  .scr{background:#F4F6F8;border-radius:18px;overflow:hidden;height:604px;display:flex;flex-direction:column}
+  .ph-top{background:var(--ink);color:#fff;padding:13px 15px 14px}
+  .ph-top .d{font-size:10.5px;color:#8FA8BE;letter-spacing:.7px;font-weight:700}
+  .ph-top .n{font-size:16px;font-weight:700;margin-top:3px}
+  .ph-top .s{font-size:11.5px;color:#A9C2D8;margin-top:1px}
+  .ph-prog{padding:11px 15px;background:var(--ink2);color:#fff;display:flex;align-items:center;gap:11px}
+  .ph-prog .bar{flex:1;background:rgba(255,255,255,.18)}
+  .ph-prog span{font-size:11.5px;font-weight:700;white-space:nowrap}
+  .ph-list{flex:1;overflow-y:auto;padding:11px}
+  .job{background:#fff;border:1px solid var(--line);border-radius:9px;padding:11px 12px;margin-bottom:8px}
+  .job.act{border-color:var(--amber);box-shadow:0 0 0 2px rgba(242,160,7,.14)}
+  .job.fin{background:#F6FAF7;border-color:#CFE7DA}
+  .job .r1{display:flex;justify-content:space-between;align-items:flex-start;gap:9px}
+  .job .nm{font-size:13px;font-weight:700;color:var(--ink)}
+  .job .os{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.4}
+  .job .acts{display:flex;gap:6px;margin-top:9px}
+  .job .acts button{flex:1;border:0;border-radius:6px;padding:8px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+  .go{background:var(--ink);color:#fff}
+  .stop{background:var(--green);color:#fff}
+  .halt{background:#EDF1F5;color:#5C6B79}
+  .fields{margin-top:9px;padding-top:9px;border-top:1px dashed var(--line);display:flex;gap:7px}
+  .fields div{flex:1}
+  .fields label{font-size:9.5px;color:var(--muted);font-weight:700;letter-spacing:.4px;display:block;margin-bottom:3px}
+  .fields input{width:100%;border:1px solid var(--line);border-radius:5px;padding:6px 7px;font:inherit;font-size:12px}
+  .fields input:focus{outline:0;border-color:var(--steel)}
+  .ph-bot{background:#fff;border-top:1px solid var(--line);padding:10px 15px;font-size:11.5px;color:var(--muted);text-align:center}
+  .notes{display:grid;gap:14px}
+  .note{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:15px 18px}
+  .note b{display:block;color:var(--ink);font-size:13.5px;margin-bottom:4px}
+  .note p{font-size:12.5px;color:var(--muted);line-height:1.55}
+  .stops{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .stops span{font-size:11.5px;background:#EDF1F5;color:#4C5D6B;padding:5px 10px;border-radius:16px;font-weight:600}
+
+  /* ---------- OS ---------- */
+  .oshd{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:0;border:1px solid var(--line);
+    border-radius:10px;background:#fff;overflow:hidden;margin-bottom:16px}
+  .oshd>div{padding:16px 20px;border-right:1px solid var(--line)}
+  .oshd>div:last-child{border-right:0}
+  .oshd .lab{font-size:10.5px;letter-spacing:.8px;color:var(--muted);font-weight:700}
+  .oshd .big{font-size:22px;font-weight:700;color:var(--ink);margin-top:5px}
+  .oshd .sm{font-size:12px;color:var(--muted);margin-top:3px}
+  .dw{border-bottom:1px solid var(--line)}
+  .dw:last-child{border-bottom:0}
+  .dw .dh{padding:12px 20px;background:#F7F9FB;display:flex;justify-content:space-between;align-items:center;gap:14px}
+  .dw .dh b{color:var(--ink);font-size:13px}
+  .dw .dh em{font-style:normal;color:var(--muted);font-size:11.5px;margin-left:9px}
+  .ops{display:flex;gap:5px;flex-wrap:wrap}
+  .op{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:5px;border:1px solid}
+  .op.ok{background:var(--green-l);border-color:#BFE4D1;color:#14663F}
+  .op.run{background:var(--amber-l);border-color:#F3DFB4;color:#8A5D06}
+  .op.wait{background:#F4F7FA;border-color:#E1E8EF;color:#8797A5}
+
+  /* ---------- máquinas ---------- */
+  .mach{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .mc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+  .mc .r1{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+  .mc .nm{font-size:14px;font-weight:700;color:var(--ink)}
+  .mc .os{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45}
+  .mc .oc{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin:11px 0 5px;font-weight:600}
+
+  .flag{display:flex;align-items:center;gap:7px}
+  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
+  .feed div{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid #EEF2F5;font-size:12.5px}
+  .feed div:last-child{border-bottom:0}
+  .feed time{color:var(--muted);font-variant-numeric:tabular-nums;flex:0 0 40px;font-weight:600}
+  .feed p{line-height:1.45}
+  .feed b{color:var(--ink)}
+  .loss{display:flex;align-items:center;gap:11px;padding:8px 0}
+  .loss span:first-child{flex:0 0 152px;font-size:12.5px}
+  .loss .bar{flex:1}
+  .loss span:last-child{flex:0 0 42px;text-align:right;font-weight:700;color:var(--ink);font-size:12.5px}
+  .banner{background:var(--ink);color:#fff;border-radius:10px;padding:15px 20px;font-size:13px;line-height:1.55;margin-top:16px}
+  .banner b{color:var(--amber)}
+  @media(max-width:1180px){.kpis{grid-template-columns:repeat(3,1fr)}.plan,.floor{grid-template-columns:1fr}.mach{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="side">
+    <div class="brand">
+      <h1>ESQU<span>A</span>DRO</h1>
+      <p>Gestão de produção · BNG Metalmecânica</p>
+    </div>
+    <nav class="nav">
+      <div class="grp">ACOMPANHAR</div>
+      <button class="on" data-go="painel">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        Painel do dia</button>
+      <button data-go="os">
+        <svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>
+        Ordens de serviço</button>
+      <button data-go="maquinas">
+        <svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9z"/></svg>
+        Máquinas</button>
+      <div class="grp">PLANEJAR</div>
+      <button data-go="programacao">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Programação semanal</button>
+      <div class="grp">EXECUTAR</div>
+      <button data-go="chao">
+        <svg class="ic" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+        Chão de fábrica</button>
+    </nav>
+    <div class="who">
+      <b>Santiago Pivetta</b>
+      PCP · Planejamento
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main">
+
+    <!-- ---------- PAINEL ---------- -->
+    <section class="screen on" id="painel">
+      <header class="top">
+        <div>
+          <h2>Painel do dia</h2>
+          <p>Terça-feira, 30 de junho de 2026 · Semana 27 · atualizado há 40 segundos</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn">Exportar PDF</button>
+          <button class="btn pri">Enviar leitura do dia</button>
+        </div>
+      </header>
+      <div class="wrap">
+
+        <div class="kpis">
+          <div class="kpi"><div class="lab">OS EM ABERTO</div><div class="val">12</div><div class="note">6 obras ativas</div></div>
+          <div class="kpi"><div class="lab">ITENS CONCLUÍDOS HOJE</div><div class="val">47 <small>/ 68</small></div><div class="note">previsto para o dia</div></div>
+          <div class="kpi"><div class="lab">ADERÊNCIA À PROGRAMAÇÃO</div><div class="val" style="color:#8A5D06">69<small>%</small></div><div class="note">meta interna: 85%</div></div>
+          <div class="kpi"><div class="lab">HORAS APONTADAS HOJE</div><div class="val">312<small>h</small></div><div class="note">89 colaboradores</div></div>
+          <div class="kpi"><div class="lab">OS EM RISCO DE PRAZO</div><div class="val" style="color:var(--red)">3</div><div class="note">B008/26 · B050/25 · B018/26</div></div>
+        </div>
+
+        <div class="grid" style="grid-template-columns:1.55fr 1fr">
+          <div class="card">
+            <div class="pad" style="border-bottom:1px solid var(--line)">
+              <div class="h3">Andamento das obras</div>
+              <div class="sub">Avanço calculado pelos itens concluídos sobre o total previsto — nunca digitado.</div>
+            </div>
+            <div style="padding:14px 8px 8px">
+              <table>
+                <thead><tr><th>OBRA</th><th>DESCRIÇÃO</th><th>PRAZO</th><th style="width:150px">AVANÇO</th><th>STATUS</th></tr></thead>
+                <tbody>
+                  <tr><td class="mono">B018/26</td><td>Tensionador · SGM-PE0005</td><td>14/07</td>
+                    <td><div class="bar"><i style="width:62%;background:var(--amber)"></i></div><div class="sub" style="margin-top:4px">62%</div></td>
+                    <td><span class="tag t-warn">ATENÇÃO</span></td></tr>
+                  <tr><td class="mono">B011/26</td><td>Nervuras inferiores · MD6 e MD7</td><td>07/07</td>
+                    <td><div class="bar"><i style="width:81%;background:var(--green)"></i></div><div class="sub" style="margin-top:4px">81%</div></td>
+                    <td><span class="tag t-ok">NO PRAZO</span></td></tr>
+                  <tr><td class="mono">B008/26</td><td>Usinagem · desenho XX-005</td><td>03/07</td>
+                    <td><div class="bar"><i style="width:88%;background:var(--red)"></i></div><div class="sub" style="margin-top:4px">88%</div></td>
+                    <td><span class="tag t-bad">RISCO</span></td></tr>
+                  <tr><td class="mono">B050/25</td><td>Mandrilhadora Cutmaz · teste de carga</td><td>30/06</td>
+                    <td><div class="bar"><i style="width:95%;background:var(--red)"></i></div><div class="sub" style="margin-top:4px">95%</div></td>
+                    <td><span class="tag t-bad">RISCO</span></td></tr>
+                  <tr><td class="mono">B051/26</td><td>Rasgo dos tubos</td><td>10/07</td>
+                    <td><div class="bar"><i style="width:45%;background:var(--amber)"></i></div><div class="sub" style="margin-top:4px">45%</div></td>
+                    <td><span class="tag t-warn">ATENÇÃO</span></td></tr>
+                  <tr><td class="mono">B025/26</td><td>Estrutura · desenho 1/18</td><td>21/07</td>
+                    <td><div class="bar"><i style="width:34%;background:var(--green)"></i></div><div class="sub" style="margin-top:4px">34%</div></td>
+                    <td><span class="tag t-ok">NO PRAZO</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-rows:auto auto">
+            <div class="card pad">
+              <div class="h3">Onde a hora se perde</div>
+              <div class="sub" style="margin-bottom:12px">Motivos de parada apontados na semana</div>
+              <div class="loss"><span>Aguardando material</span><div class="bar"><i style="width:100%;background:var(--red)"></i></div><span>38h</span></div>
+              <div class="loss"><span>Manutenção de máquina</span><div class="bar"><i style="width:58%;background:var(--amber)"></i></div><span>22h</span></div>
+              <div class="loss"><span>Aguardando desenho</span><div class="bar"><i style="width:37%;background:var(--amber)"></i></div><span>14h</span></div>
+              <div class="loss"><span>Deslocamento</span><div class="bar"><i style="width:24%;background:var(--steel)"></i></div><span>9h</span></div>
+              <div class="loss"><span>Retrabalho</span><div class="bar"><i style="width:16%;background:var(--steel)"></i></div><span>6h</span></div>
+            </div>
+            <div class="card pad">
+              <div class="h3">Últimos apontamentos</div>
+              <div class="sub" style="margin-bottom:6px">Direto do chão de fábrica</div>
+              <div class="feed">
+                <div><time>14:22</time><p><b>Eurivaldo</b> · Metaleira<br>OS 012/26 item 2.6 — 4 un encerrado</p></div>
+                <div><time>14:05</time><p><b>João José Januário</b> · Soldagem<br>OS 018/26 — 1.850 mm de solda</p></div>
+                <div><time>13:47</time><p><b>Gelcimar</b> · Furadeira<br>OS 025/26 item 24 — 1 un encerrado</p></div>
+                <div><time>13:30</time><p><b>Carlinhos</b> · Serra fita<br>OS 012/26 itens 1.1 a 1.5 — 14 un</p></div>
+                <div><time>13:12</time><p><b>Renan</b> · Traçagem de perfis<br><span style="color:var(--red)">parada: aguardando desenho</span></p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="banner">
+          Nenhum número desta tela foi digitado por alguém. Todos saem do <b>apontamento do líder</b> — que só confirma o que o PCP programou.
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- PROGRAMAÇÃO ---------- -->
+    <section class="screen" id="programacao">
+      <header class="top">
+        <div>
+          <h2>Programação semanal</h2>
+          <p>Semana 27 · 29/06 a 03/07/2026 · rascunho, não publicado</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn">Copiar semana anterior</button>
+          <button class="btn pri" id="pub">Publicar programação</button>
+        </div>
+      </header>
+      <div class="wrap">
+
+        <div class="tabs" style="margin-bottom:16px">
+          <button class="on" data-sec="prep">Preparação</button>
+          <button data-sec="sold">Soldagem</button>
+          <button data-sec="mont">Montagem</button>
+          <button data-sec="usin">Usinagem</button>
+        </div>
+
+        <div class="plan">
+          <div class="card sched">
+            <table>
+              <thead><tr>
+                <th id="colhd">POSTO DE TRABALHO</th>
+                <th>SEG 29/06</th><th>TER 30/06</th><th>QUA 01/07</th><th>QUI 02/07</th><th>SEX 03/07</th>
+              </tr></thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+
+          <div class="back">
+            <div class="hd">
+              <div class="h3">Itens não programados</div>
+              <div class="sub">Arraste para um posto e um dia</div>
+            </div>
+            <div class="bd">
+              <div class="warn"><b>Fresa M2000 (01)</b> está em manutenção de qua a qui — o sistema bloqueia alocação nesses dias.</div>
+              <div class="warn"><b>Adilson Dias</b> já tem 9h alocadas na terça. Limite do turno é 9h.</div>
+              <div class="bitem"><b>OS 011/26 · PP 1107</b><p>Plano de corte 6094 (#9,5) — faltam 21 un</p></div>
+              <div class="bitem"><b>OS 012/26 · C133-WL102</b><p>Itens 2.6 a 2.9 — 16 un · chapa #12,5</p></div>
+              <div class="bitem"><b>OS 018/26 · 046-P</b><p>Itens 5 a 8 — 10 un · chanfro #75</p></div>
+              <div class="bitem"><b>OS 025/26 · 4641</b><p>Item 24 — 1 un · furação</p></div>
+              <div class="bitem"><b>OS 031/26</b><p>Item 2 — 4 un · chapa #25</p></div>
+              <div class="bitem"><b>OS 045/25 · 041</b><p>Barra chata 2"x1/4" — 38 un</p></div>
+              <div class="bitem"><b>OS 045/25 · 040</b><p>Item 10.5 — 1 un · calandra</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="banner">
+          Publicou, todos os líderes veem a mesma versão na hora. Quem ainda quiser papel, exporta o PDF <b>no formato de hoje</b> — mas gerado do dado, não digitado.
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- CHÃO DE FÁBRICA ---------- -->
+    <section class="screen" id="chao">
+      <header class="top">
+        <div>
+          <h2>Chão de fábrica</h2>
+          <p>O que o líder enxerga no celular · Dhionatan Costa · Soldagem</p>
+        </div>
+        <span class="tag t-blue">PRÉ-VISUALIZAÇÃO — CLIQUE NOS BOTÕES</span>
+      </header>
+      <div class="wrap">
+        <div class="floor">
+
+          <div class="phone">
+            <div class="scr">
+              <div class="ph-top">
+                <div class="d">TERÇA · 30/06/2026 · SEMANA 27</div>
+                <div class="n">Dhionatan Costa</div>
+                <div class="s">Soldagem · 07:00 às 17:00</div>
+              </div>
+              <div class="ph-prog">
+                <div class="bar"><i id="pbar" style="width:18%;background:var(--amber)"></i></div>
+                <span id="ptxt">2 de 11</span>
+              </div>
+              <div class="ph-list" id="jobs"></div>
+              <div class="ph-bot">Última sincronização às 14:26</div>
+            </div>
+          </div>
+
+          <div class="notes">
+            <div class="note">
+              <b>O líder não digita OS nem item</b>
+              <p>Ele abre e já vê a equipe dele com o que o PCP programou para hoje. O trabalho é confirmar o que aconteceu — não redigitar a programação.</p>
+            </div>
+            <div class="note">
+              <b>Dois toques por item</b>
+              <p>Iniciar quando começa, encerrar quando termina. O sistema grava a hora sozinho. É isso que acaba com o campo “a confirmar” que hoje aparece em quase toda linha da programação de solda.</p>
+            </div>
+            <div class="note">
+              <b>Cada setor vê o campo que é dele</b>
+              <p>Soldagem informa milímetros de solda. Preparação informa peças cortadas. Usinagem informa peças e setup. Montagem informa a folha do desenho concluída. Ninguém preenche campo que não usa.</p>
+            </div>
+            <div class="note">
+              <b>Parada vira estatística, não observação solta</b>
+              <p>Em vez de escrever no campo de observação, o líder toca no motivo. No fim do mês existe um ranking do que rouba hora da fábrica.</p>
+              <div class="stops">
+                <span>Aguardando material</span><span>Manutenção</span><span>Aguardando desenho</span>
+                <span>Deslocamento</span><span>Retrabalho</span><span>Falta de energia</span>
+              </div>
+            </div>
+            <div class="note">
+              <b>Funciona com sinal fraco</b>
+              <p>O apontamento fica guardado no aparelho e sobe quando a conexão volta. No galpão isso não é detalhe.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- OS ---------- -->
+    <section class="screen" id="os">
+      <header class="top">
+        <div>
+          <h2>OS 012/26</h2>
+          <p>Obra B018/26 · Tensionador SGM · desenhos C133-WL101, C133-WL102 e U551-FL16</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn">Histórico</button>
+          <button class="btn pri">Abrir programação</button>
+        </div>
+      </header>
+      <div class="wrap">
+
+        <div class="oshd">
+          <div>
+            <div class="lab">AVANÇO DA OS</div>
+            <div class="big">58%</div>
+            <div class="bar" style="margin-top:8px"><i style="width:58%;background:var(--amber)"></i></div>
+            <div class="sm">39 de 67 itens concluídos</div>
+          </div>
+          <div><div class="lab">PRAZO</div><div class="big">09/07</div><div class="sm">faltam 9 dias · <span style="color:#8A5D06;font-weight:700">atenção</span></div></div>
+          <div><div class="lab">HORAS PREVISTAS</div><div class="big">240 h</div><div class="sm">estimativa do orçamento</div></div>
+          <div><div class="lab">HORAS APONTADAS</div><div class="big" style="color:var(--red)">176 h</div><div class="sm">73% do previsto para 58% da obra</div></div>
+        </div>
+
+        <div class="card">
+          <div class="pad" style="border-bottom:1px solid var(--line)">
+            <div class="h3">Itens e operações</div>
+            <div class="sub">Cada item percorre a sequência de operações. O quadrinho acende conforme o líder aponta.</div>
+          </div>
+
+          <div class="dw">
+            <div class="dh"><div><b>C133-WL101</b><em>folha 1/4 · 24 itens</em></div><span class="tag t-warn">EM EXECUÇÃO · 71%</span></div>
+            <div style="padding:6px 8px 10px">
+              <table>
+                <thead><tr><th>ITEM</th><th>QTD</th><th>MATERIAL</th><th>OPERAÇÕES</th><th>RESPONSÁVEL</th></tr></thead>
+                <tbody>
+                  <tr><td class="mono">1.1</td><td>4 un</td><td>chapa #19</td>
+                    <td><div class="ops"><span class="op ok">Corte ✓</span><span class="op ok">Chanfro ✓</span><span class="op ok">Solda ✓</span><span class="op run">Montagem</span></div></td>
+                    <td>Angelo / Yan</td></tr>
+                  <tr><td class="mono">1.2</td><td>4 un</td><td>chapa #19</td>
+                    <td><div class="ops"><span class="op ok">Corte ✓</span><span class="op ok">Chanfro ✓</span><span class="op run">Solda</span><span class="op wait">Montagem</span></div></td>
+                    <td>João José Januário</td></tr>
+                  <tr><td class="mono">1.3</td><td>2 un</td><td>chapa #12,5</td>
+                    <td><div class="ops"><span class="op ok">Corte ✓</span><span class="op ok">Chanfro ✓</span><span class="op wait">Solda</span><span class="op wait">Montagem</span></div></td>
+                    <td>—</td></tr>
+                  <tr><td class="mono">2.6</td><td>4 un</td><td>chapa #12,5</td>
+                    <td><div class="ops"><span class="op ok">Corte ✓</span><span class="op ok">Metaleira ✓</span><span class="op ok">Solda ✓</span><span class="op ok">Montagem ✓</span></div></td>
+                    <td class="sub">concluído 30/06</td></tr>
+                  <tr><td class="mono">2.7</td><td>2 un</td><td>chapa #12,5</td>
+                    <td><div class="ops"><span class="op ok">Corte ✓</span><span class="op run">Metaleira</span><span class="op wait">Solda</span><span class="op wait">Montagem</span></div></td>
+                    <td>Eurivaldo</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="dw">
+            <div class="dh"><div><b>U551-FL16</b><em>folha 2/4 · 31 itens</em></div><span class="tag t-warn">EM EXECUÇÃO · 44%</span></div>
+            <div style="padding:6px 8px 10px">
+              <table>
+                <thead><tr><th>ITEM</th><th>QTD</th><th>MATERIAL</th><th>OPERAÇÕES</th><th>RESPONSÁVEL</th></tr></thead>
+                <tbody>
+                  <tr><td class="mono">135.2</td><td>1 un</td><td>chapa #19</td>
+                    <td><div class="ops"><span class="op ok">Corte CNC ✓</span><span class="op run">Chanfro</span><span class="op wait">Solda</span><span class="op wait">Montagem</span></div></td>
+                    <td>José Maria</td></tr>
+                  <tr><td class="mono">134.2</td><td>1 un</td><td>chapa #19</td>
+                    <td><div class="ops"><span class="op ok">Corte CNC ✓</span><span class="op wait">Chanfro</span><span class="op wait">Solda</span><span class="op wait">Montagem</span></div></td>
+                    <td>—</td></tr>
+                  <tr><td class="mono">135.3</td><td>2 un</td><td>chapa #12,5</td>
+                    <td><div class="ops"><span class="op ok">Corte CNC ✓</span><span class="op ok">Chanfro ✓</span><span class="op run">Solda</span><span class="op wait">Montagem</span></div></td>
+                    <td>Antonio Pires</td></tr>
+                  <tr><td class="mono">136.2</td><td>2 un</td><td>chapa #12,5</td>
+                    <td><div class="ops"><span class="op wait">Corte CNC</span><span class="op wait">Chanfro</span><span class="op wait">Solda</span><span class="op wait">Montagem</span></div></td>
+                    <td class="sub" style="color:var(--red)">aguardando material</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="dw">
+            <div class="dh"><div><b>C133-WL102</b><em>folha 3/4 · 12 itens</em></div><span class="tag t-idle">NÃO INICIADO</span></div>
+          </div>
+        </div>
+
+        <div class="banner">
+          É esta tela que hoje não existe. Saber quanto falta da OS 018/26 depende de <b>telefonar para cada líder</b> — e a resposta muda conforme quem atende.
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- MÁQUINAS ---------- -->
+    <section class="screen" id="maquinas">
+      <header class="top">
+        <div>
+          <h2>Máquinas</h2>
+          <p>Usinagem e corte · ocupação da semana 27</p>
+        </div>
+        <button class="btn">Registrar parada</button>
+      </header>
+      <div class="wrap">
+        <div class="mach" id="machines"></div>
+        <div class="banner">
+          A programação da usinagem já é feita <b>por máquina</b>, não por pessoa. O sistema respeita isso — e bloqueia alocação em equipamento parado para manutenção.
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ---------------- navegação ---------------- */
+document.querySelectorAll('.nav button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+    document.getElementById(b.dataset.go).classList.add('on');
+    window.scrollTo(0,0);
+  };
+});
+
+/* ---------------- programação: dados por setor ---------------- */
+const C=(t,s,cls)=>`<div class="chip ${cls||''}"><b>${t}</b><span>${s}</span></div>`;
+const E='<div class="empty">livre</div>';
+
+const SEC={
+  prep:{head:'POSTO DE TRABALHO',rows:[
+    ['CNC 01','Josias e Diuliano · dia',[C('OS 011/26','PP 1104 · 8 un'),C('OS 011/26','PP 1104 · 8 un'),C('OS 012/26','PP 1290 · 12 un'),C('OS 012/26','PP 1290 · 12 un'),E]],
+    ['CNC 01 noite','Lucas',[C('OS 031/26','item 2 · 4 un #25'),C('OS 012/26','itens 135.2 / 134.2'),C('OS 012/26','itens 135.3 / 136.2'),E,E]],
+    ['CNC 02','Renato e João Vitor',[C('OS 011/26','PP 1107 · faltam 21'),C('OS 011/26','PP 1107 · concluir'),E,C('OS 018/26','002-P · 6 un'),E]],
+    ['Metaleira','Wesley / Eurivaldo',[C('OS 045/25','barra chata · 38 un'),C('OS 012/26','itens 2.6 a 2.9'),C('OS 012/26','itens 50AB · 24 un'),E,E]],
+    ['Serra fita','Carlinhos',[C('OS 012/26','itens 1.1 a 1.5 · 14 un'),C('OS 012/26','itens 1.1 a 1.5 · 14 un'),E,C('OS 025/26','item 3 · 4 un'),E]],
+    ['Furadeira','Gelcimar',[C('OS 025/26','itens 2 e 3 · 8 un'),C('OS 025/26','4641 item 24'),C('OS 018/26','002-P furação · 6 un'),E,E]],
+    ['Chanfro','José Maria / Eder',[C('OS 018/26','perfis W 360x101'),C('OS 018/26','046-P itens 5 a 8'),C('OS 012/26','item 135.2'),E,E]],
+    ['Calandra','Renato',[C('OS 012/26','1000.0910 · 4 un'),C('OS 012/26','1000.0910 · 6 un'),C('OS 045/25','040 item 10.5'),E,E]]
+  ]},
+  sold:{head:'COLABORADOR',rows:[
+    ['Dhionatan Costa','líder',[C('OS 018/26','acompanhamento'),C('OS 018/26','acompanhamento'),C('OS 018/26','acompanhamento'),C('OS 018/26','acompanhamento'),C('OS 018/26','acompanhamento')]],
+    ['João José Januário','soldador',[C('OS 018/26','roda · 2.400 mm'),C('OS 012/26','item 1.2 · 1.850 mm'),C('OS 012/26','item 1.2'),E,E]],
+    ['Antonio Pires','soldador',[C('OS 018/26','roda · 2.100 mm'),C('OS 012/26','item 135.3'),C('OS 012/26','item 135.3'),E,E]],
+    ['Gabriel Santos','soldador',[C('OS 018/26','lateral tensionador'),C('OS 018/26','lateral tensionador'),E,C('OS 025/26','conjunto 4640'),E]],
+    ['Daniel Alves','soldador',[C('OS 011/26','conjunto PP 1104'),E,C('OS 011/26','conjunto PP 1104'),E,E]],
+    ['Adilson Dias','soldador',[C('OS 018/26','diagonais'),C('OS 018/26','diagonais · 9h alocadas','mt'),C('OS 018/26','diagonais'),E,E]],
+    ['Luciano','lixador',[C('OS 018/26','acabamento roda'),C('OS 018/26','acabamento roda'),C('OS 012/26','acabamento'),E,E]],
+    ['Raimundo','lixador',[C('OS 012/26','acabamento itens 1.x'),C('OS 012/26','acabamento itens 1.x'),E,E,E]]
+  ]},
+  mont:{head:'DUPLA DE MONTAGEM',rows:[
+    ['Angelo / Yan','montagem',[C('B025/26','desenho 1/18 · continuação'),C('B025/26','desenho 1/18 · continuação'),C('B025/26','desenho 1/18'),E,E]],
+    ['Magno / Pedro','montagem',[C('B011/26','MD6 · nervuras inferiores'),C('B011/26','MD6 · nervuras inferiores'),C('B011/26','MD6 · fechamento'),E,E]],
+    ['Mateus / Jhuan','montagem',[C('B011/26','MD7 · início nervuras'),C('B011/26','MD7 · nervuras'),C('B011/26','MD7 · nervuras'),E,E]],
+    ['Junior / Wallas','preparação',[C('B018/26','002-P · preparar material'),C('B018/26','002-P · preparar material'),E,E,E]],
+    ['Edson / Samuel','montagem',[C('B018/26','módulo da roda · início'),C('B018/26','módulo da roda'),C('B018/26','módulo da roda'),E,E]],
+    ['Maicon / Yuri','montagem',[C('B018/26','lateral do tensionador'),C('B018/26','lateral do tensionador'),E,E,E]],
+    ['Marcos / Julio','montagem',[C('B018/26','vigas e diagonais'),C('B018/26','vigas e diagonais'),C('B018/26','vigas e diagonais'),E,E]],
+    ['Reginaldo / Jeferson','OS interna',[C('Interna','ajuste das escadas'),C('Interna','ajuste das escadas'),E,E,E]]
+  ]},
+  usin:{head:'MÁQUINA',rows:[
+    ['Torno TR2','operador Diego',[C('B008/26','XX-005-5 · item 7.7'),C('B008/26','XX-005-5 · item 7.7'),C('B008/26','XX-005-5 · item 7.8'),E,E]],
+    ['Torno Vertical','operador Márcio',[E,C('B012/26','flange · 2 un'),C('B012/26','flange · 2 un'),E,E]],
+    ['Torno L300200','operador Paulo',[C('B012/26','eixo · finalizado'),E,E,C('B050/25','ajuste final'),E]],
+    ['Fresa M1500','operador Sérgio',[C('B051/26','rasgo dos tubos'),C('B051/26','rasgo dos tubos'),C('B051/26','rasgo dos tubos'),E,E]],
+    ['Fresa M2000 (01)','—',[C('Manutenção','preventiva programada','mt'),C('Manutenção','preventiva programada','mt'),C('Manutenção','bloqueado','mt'),C('Manutenção','bloqueado','mt'),E]],
+    ['Fresa M2000 (02)','operador Ivan',[C('B008/26','XX-005-4 · item 2,2'),C('B008/26','XX-005-4 · item 2,3'),C('B008/26','XX-005-4 · item 2,4'),E,E]],
+    ['Mandrilhadora Cutmaz','operador Jean',[C('B050/25','teste de carga'),C('B050/25','teste de carga'),C('B050/25','teste de carga'),E,E]],
+    ['Serra','operador Tadeu',[C('OS 045/25','corte de perfis'),E,C('OS 012/26','corte de tubos'),E,E]]
+  ]}
+};
+
+function draw(sec){
+  const d=SEC[sec];
+  document.getElementById('colhd').textContent=d.head;
+  document.getElementById('rows').innerHTML=d.rows.map(r=>
+    `<tr><td>${r[0]}<em>${r[1]}</em></td>${r[2].map(c=>`<td>${c}</td>`).join('')}</tr>`
+  ).join('');
+}
+draw('prep');
+document.querySelectorAll('.tabs button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); draw(b.dataset.sec);
+  };
+});
+
+const pub=document.getElementById('pub');
+pub.onclick=()=>{
+  pub.textContent='✓ Publicada — 4 setores notificados';
+  pub.classList.remove('pri'); pub.classList.add('done');
+  document.querySelector('#programacao .top p').textContent=
+    'Semana 27 · 29/06 a 03/07/2026 · publicada em 30/06 às 14:31 por Santiago Pivetta';
+};
+
+/* ---------------- celular do líder ---------------- */
+const JOBS=[
+  {n:'João José Januário',o:'OS 018/26 · módulo da roda',d:'Solda de topo · 2.400 mm previstos',s:'run',t:'07:12'},
+  {n:'Antonio Pires',o:'OS 012/26 · item 135.3',d:'Solda de filete · 2 un',s:'run',t:'07:20'},
+  {n:'Gabriel Santos',o:'OS 018/26 · lateral do tensionador',d:'Montagem de vigas · 4 un',s:'fin',t:'07:05'},
+  {n:'Daniel Alves',o:'OS 011/26 · conjunto PP 1104',d:'Solda de conjunto · 8 un',s:'fin',t:'07:00'},
+  {n:'Adilson Dias',o:'OS 018/26 · diagonais',d:'Solda estrutural · 6 un',s:'new'},
+  {n:'Jackson',o:'OS 012/26 · item 1.2',d:'Solda de topo · 4 un',s:'new'},
+  {n:'Adailton',o:'OS 025/26 · conjunto 4640',d:'Solda de filete · 4 un',s:'new'},
+  {n:'Luciano · lixador',o:'OS 018/26 · acabamento roda',d:'Lixamento e acabamento',s:'new'},
+  {n:'Raimundo · lixador',o:'OS 012/26 · itens 1.1 a 1.5',d:'Lixamento · 14 un',s:'new'},
+  {n:'Cleidiomar · lixador',o:'OS 011/26 · conjunto',d:'Lixamento · 8 un',s:'new'},
+  {n:'Guilherme Santos · lixador',o:'—',d:'Aguardando liberação de material',s:'blk'}
+];
+
+function renderJobs(){
+  document.getElementById('jobs').innerHTML=JOBS.map((j,i)=>{
+    let cls=j.s==='run'?'act':(j.s==='fin'?'fin':'');
+    let tag=j.s==='run'?'<span class="tag t-warn">EM EXECUÇÃO</span>':
+            j.s==='fin'?'<span class="tag t-ok">ENCERRADO</span>':
+            j.s==='blk'?'<span class="tag t-bad">PARADO</span>':'<span class="tag t-idle">NÃO INICIADO</span>';
+    let acts='';
+    if(j.s==='new')  acts=`<div class="acts"><button class="go" onclick="setJob(${i},'run')">Iniciar</button><button class="halt" onclick="setJob(${i},'blk')">Parada</button></div>`;
+    if(j.s==='run')  acts=`<div class="fields">
+        <div><label>QTD CONCLUÍDA</label><input placeholder="0"></div>
+        <div><label>SOLDA (MM)</label><input placeholder="0"></div>
+      </div>
+      <div class="acts"><button class="stop" onclick="setJob(${i},'fin')">Encerrar</button><button class="halt" onclick="setJob(${i},'blk')">Parada</button></div>`;
+    if(j.s==='blk')  acts=`<div class="acts"><button class="go" onclick="setJob(${i},'run')">Retomar</button></div>`;
+    if(j.s==='fin')  acts=`<div class="acts"><button class="halt" onclick="setJob(${i},'run')">Reabrir apontamento</button></div>`;
+    return `<div class="job ${cls}">
+      <div class="r1"><div><div class="nm">${j.n}</div><div class="os">${j.o}<br>${j.d}</div></div>${tag}</div>
+      ${j.t&&j.s!=='new'?`<div class="os" style="margin-top:6px">início ${j.t}${j.s==='fin'?' · fim 14:18':''}</div>`:''}
+      ${acts}</div>`;
+  }).join('');
+  const fin=JOBS.filter(j=>j.s==='fin').length;
+  document.getElementById('ptxt').textContent=fin+' de '+JOBS.length;
+  const pc=Math.round(fin/JOBS.length*100);
+  const b=document.getElementById('pbar');
+  b.style.width=Math.max(pc,4)+'%';
+  b.style.background=pc>=80?'var(--green)':(pc>=40?'var(--amber)':'var(--amber)');
+}
+function setJob(i,s){
+  JOBS[i].s=s;
+  if(s==='run'&&!JOBS[i].t) JOBS[i].t=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  renderJobs();
+}
+renderJobs();
+
+/* ---------------- máquinas ---------------- */
+const M=[
+  ['Torno TR2','B008/26 · desenho XX-005-5 · item 7.7','run',78],
+  ['Torno Vertical','B012/26 · flange · 2 un','run',52],
+  ['Torno L300200','B012/26 · eixo — finalizado','ok',91],
+  ['Torno convencional','sem alocação nesta semana','idle',0],
+  ['Fresa M1500','B051/26 · rasgo dos tubos','run',84],
+  ['Fresa M2000 (01)','manutenção preventiva · qua e qui','mt',0],
+  ['Fresa M2000 (02)','B008/26 · desenho XX-005-4 · item 2,3','run',88],
+  ['Fresa convencional','sem alocação nesta semana','idle',0],
+  ['Mandrilhadora Cutmaz','B050/25 · teste de carga','run',66]
+];
+const MT={run:['EM OPERAÇÃO','t-warn','var(--amber)'],ok:['CONCLUÍDO','t-ok','var(--green)'],
+          mt:['MANUTENÇÃO','t-bad','var(--red)'],idle:['OCIOSA','t-idle','#A9B7C4']};
+document.getElementById('machines').innerHTML=M.map(m=>{
+  const t=MT[m[2]];
+  return `<div class="mc">
+    <div class="r1"><div><div class="nm">${m[0]}</div><div class="os">${m[1]}</div></div><span class="tag ${t[1]}">${t[0]}</span></div>
+    <div class="oc"><span>OCUPAÇÃO DA SEMANA</span><span>${m[3]}%</span></div>
+    <div class="bar"><i style="width:${Math.max(m[3],2)}%;background:${t[2]}"></i></div>
+  </div>`;
+}).join('');
+</script>
+</body>
+</html>
