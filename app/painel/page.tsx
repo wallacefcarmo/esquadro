@@ -199,7 +199,7 @@ export default async function PainelPage() {
             </div>
           </div>
 
-          <div className="banner">Nenhum número desta tela é digitado. Tudo sai do <b>apontamento do líder</b>.</div>
+          <div className="banner">Nenhum número desta tela é digitado. Tudo sai do <Link href="/apontamento"><b>apontamento do líder</b></Link>.</div>
         </div>
       </div>
     </AppShell>
