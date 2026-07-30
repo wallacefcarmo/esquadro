@@ -8,11 +8,12 @@ interface ProgramacaoFormProps {
   setorId: string;
   semana: string;
   ordensServico: { id: string; numero: string }[];
+  publicada: boolean;
 }
 
 const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
 
-export function ProgramacaoForm({ setorId, semana, ordensServico }: ProgramacaoFormProps) {
+export function ProgramacaoForm({ setorId, semana, ordensServico, publicada }: ProgramacaoFormProps) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [erro, setErro] = useState('');
@@ -27,19 +28,11 @@ export function ProgramacaoForm({ setorId, semana, ordensServico }: ProgramacaoF
     setErro('');
     start(async () => {
       const res = await criarProgramacao({
-        setor_id: setorId,
-        semana,
-        responsavel_nome: responsavel,
-        dia_semana: Number(dia),
-        os_id: osId || undefined,
-        descricao,
-        tipo,
+        setor_id: setorId, semana, responsavel_nome: responsavel,
+        dia_semana: Number(dia), os_id: osId || undefined, descricao, tipo,
       });
       if (res.error) setErro(res.error);
-      else {
-        setResponsavel(''); setDescricao(''); setOsId('');
-        router.refresh();
-      }
+      else { setResponsavel(''); setDescricao(''); setOsId(''); router.refresh(); }
     });
   }
 
@@ -52,45 +45,41 @@ export function ProgramacaoForm({ setorId, semana, ordensServico }: ProgramacaoF
   }
 
   return (
-    <div className="bg-white border border-line rounded-2xl p-4 flex flex-col gap-3">
-      <form onSubmit={submit} className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-end">
-        <div className="col-span-2">
-          <label className="text-[11px] text-muted uppercase">Responsável</label>
-          <input value={responsavel} onChange={e => setResponsavel(e.target.value)} required
-            className="w-full bg-ice border border-line rounded-lg px-3 py-2 text-sm mt-1" />
+    <div className="card pad stack">
+      <form onSubmit={submit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 10, alignItems: 'end' }}>
+        <div>
+          <label className="lab">Responsável</label>
+          <input className="field" value={responsavel} onChange={e => setResponsavel(e.target.value)} required />
         </div>
         <div>
-          <label className="text-[11px] text-muted uppercase">Dia</label>
-          <select value={dia} onChange={e => setDia(e.target.value)} className="w-full bg-ice border border-line rounded-lg px-3 py-2 text-sm mt-1">
+          <label className="lab">Dia</label>
+          <select className="field" value={dia} onChange={e => setDia(e.target.value)}>
             {DIAS.map((d, i) => <option key={i} value={i + 1}>{d}</option>)}
           </select>
         </div>
         <div>
-          <label className="text-[11px] text-muted uppercase">OS</label>
-          <select value={osId} onChange={e => setOsId(e.target.value)} className="w-full bg-ice border border-line rounded-lg px-3 py-2 text-sm mt-1">
+          <label className="lab">OS</label>
+          <select className="field" value={osId} onChange={e => setOsId(e.target.value)}>
             <option value="">—</option>
             {ordensServico.map(os => <option key={os.id} value={os.id}>{os.numero}</option>)}
           </select>
         </div>
-        <div className="col-span-2">
-          <label className="text-[11px] text-muted uppercase">Descrição</label>
-          <input value={descricao} onChange={e => setDescricao(e.target.value)}
-            className="w-full bg-ice border border-line rounded-lg px-3 py-2 text-sm mt-1" />
+        <div>
+          <label className="lab">Descrição</label>
+          <input className="field" value={descricao} onChange={e => setDescricao(e.target.value)} />
         </div>
         <div>
-          <label className="text-[11px] text-muted uppercase">Tipo</label>
-          <select value={tipo} onChange={e => setTipo(e.target.value as any)} className="w-full bg-ice border border-line rounded-lg px-3 py-2 text-sm mt-1">
+          <label className="lab">Tipo</label>
+          <select className="field" value={tipo} onChange={e => setTipo(e.target.value as any)}>
             <option value="producao">Produção</option>
             <option value="manutencao">Manutenção</option>
           </select>
         </div>
-        <button disabled={pending} className="py-2 bg-navy text-white rounded-lg text-sm font-semibold disabled:opacity-40">
-          Adicionar
-        </button>
+        <button className="btn pri" disabled={pending}>Adicionar</button>
       </form>
-      {erro && <p className="text-xs text-vermelho">{erro}</p>}
-      <button onClick={publicar} disabled={pending} className="self-start px-4 py-2 bg-amber text-navy rounded-lg text-sm font-semibold disabled:opacity-40">
-        Publicar programação
+      {erro && <p style={{ fontSize: 12, color: 'var(--red)' }}>{erro}</p>}
+      <button onClick={publicar} disabled={pending || publicada} className={`btn ${publicada ? 'done' : 'pri'}`} style={{ alignSelf: 'flex-start' }}>
+        {publicada ? '✓ Publicada' : 'Publicar programação da semana'}
       </button>
     </div>
   );

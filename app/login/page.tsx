@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
-import { LogoMark } from '@/components/logo-mark';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,10 +16,7 @@ export default function LoginPage() {
     setErro('');
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password: senha,
-    });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
 
     if (error || !data.user) {
       setErro('Email ou senha incorretos.');
@@ -34,60 +30,37 @@ export default function LoginPage() {
       .eq('id', data.user.id)
       .single();
 
-    if (perfil?.primeiro_acesso) {
-      router.push('/trocar-senha');
-    } else {
-      router.push('/');
-    }
+    router.push(perfil?.primeiro_acesso ? '/trocar-senha' : '/painel');
     router.refresh();
   }
 
   return (
-    <main className="min-h-screen bg-ice flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-8">
-          <LogoMark size={48} />
-          <h1 className="font-bold text-2xl tracking-wide text-navy mt-3">
-            ESQU<span className="text-amber">A</span>DRO
-          </h1>
-          <p className="text-muted text-sm mt-1 tracking-wide">PCP · BNG Metalmecânica</p>
+    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ width: '100%', maxWidth: 360 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28 }}>
+          <div className="brand" style={{ color: 'var(--ink)', fontSize: 22, fontWeight: 800, letterSpacing: '.3px' }}>
+            ESQU<span style={{ color: 'var(--amber)' }}>A</span>DRO
+          </div>
+          <p className="sub" style={{ marginTop: 6 }}>Gestão de produção · BNG Metalmecânica</p>
         </div>
 
-        <form
-          onSubmit={handleLogin}
-          className="bg-white border border-line rounded-2xl p-6 flex flex-col gap-4"
-        >
-          <h2 className="font-semibold text-xs tracking-[3px] uppercase text-muted">
+        <form onSubmit={handleLogin} className="auth-card stack">
+          <h2 style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.5px', textTransform: 'uppercase', color: 'var(--muted)' }}>
             Acesso ao sistema
           </h2>
 
           <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="Email"
-            required
-            autoComplete="email"
-            className="bg-ice border border-line rounded-lg px-4 py-3 text-ink placeholder-muted focus:outline-none focus:border-steel text-sm"
+            type="email" className="field" value={email} onChange={e => setEmail(e.target.value)}
+            placeholder="Email" required autoComplete="email"
           />
-
           <input
-            type="password"
-            value={senha}
-            onChange={e => setSenha(e.target.value)}
-            placeholder="Senha"
-            required
-            autoComplete="current-password"
-            className="bg-ice border border-line rounded-lg px-4 py-3 text-ink placeholder-muted focus:outline-none focus:border-steel text-sm"
+            type="password" className="field" value={senha} onChange={e => setSenha(e.target.value)}
+            placeholder="Senha" required autoComplete="current-password"
           />
 
-          {erro && <p className="text-xs text-vermelho">{erro}</p>}
+          {erro && <p style={{ fontSize: 12, color: 'var(--red)' }}>{erro}</p>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="py-3 bg-amber text-navy rounded-lg font-semibold tracking-wide hover:opacity-90 disabled:opacity-40 transition-opacity"
-          >
+          <button type="submit" disabled={loading} className="btn pri block">
             {loading ? '…' : 'ENTRAR'}
           </button>
         </form>

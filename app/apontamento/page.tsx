@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
-import { AppHeader } from '@/components/app-header';
+import { AppShell } from '@/components/app-shell';
 import { OperacaoCard } from '@/components/operacao-card';
+import { RealtimeRefresher } from '@/components/realtime-refresher';
 import Link from 'next/link';
 
 export default async function ApontamentoPage({
@@ -13,7 +14,7 @@ export default async function ApontamentoPage({
 
   const { data: { user } } = await supabase.auth.getUser();
   const { data: perfil } = user
-    ? await supabase.from('perfis').select('role, setor_id').eq('id', user.id).single()
+    ? await supabase.from('perfis').select('nome, role, setor_id').eq('id', user.id).single()
     : { data: null };
 
   const { data: setores } = await supabase.from('setores').select('id, nome, ordem').order('ordem');
@@ -23,57 +24,71 @@ export default async function ApontamentoPage({
     ? (setorParam ?? perfil?.setor_id ?? setores?.[0]?.id)
     : perfil?.setor_id ?? setores?.[0]?.id;
 
+  const setorNome = setores?.find(s => s.id === setorAtual)?.nome ?? '';
+
   const { data: operacoes } = setorAtual
     ? await supabase
         .from('item_operacoes')
         .select('id, nome, status, ordem, unidade_extra, iniciado_em, itens(codigo, material, ordens_servico(numero))')
         .eq('setor_id', setorAtual)
-        .neq('status', 'concluido')
         .order('ordem')
     : { data: [] };
 
+  const todas = operacoes ?? [];
+  const concluidas = todas.filter((o: any) => o.status === 'concluido').length;
+  const pct = todas.length ? Math.round((concluidas / todas.length) * 100) : 0;
+
   return (
-    <main className="min-h-screen bg-ice">
-      <AppHeader title="Apontamento" />
+    <AppShell>
+      <RealtimeRefresher />
 
-      <div className="max-w-lg mx-auto px-4 py-6 flex flex-col gap-4">
-        {podeTrocarSetor && (
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {(setores ?? []).map(s => (
-              <Link
-                key={s.id}
-                href={`/apontamento?setor=${s.id}`}
-                className={`px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
-                  setorAtual === s.id ? 'bg-navy text-white' : 'bg-white border border-line text-ink'
-                }`}
-              >
-                {s.nome}
-              </Link>
-            ))}
-          </div>
-        )}
+      <header className="dtop">
+        <div>
+          <h2>Chão de fábrica</h2>
+          <p>{perfil?.nome ?? 'Líder'} · {setorNome}</p>
+        </div>
+      </header>
 
-        <div className="flex flex-col gap-3">
-          {(operacoes ?? []).map((op: any) => (
-            <OperacaoCard
-              key={op.id}
-              id={op.id}
-              nome={op.nome}
-              status={op.status}
-              osNumero={op.itens?.ordens_servico?.numero ?? '—'}
-              itemCodigo={op.itens?.codigo ?? '—'}
-              material={op.itens?.material ?? null}
-              unidadeExtra={op.unidade_extra}
-              iniciadoEm={op.iniciado_em}
-            />
-          ))}
-          {(operacoes ?? []).length === 0 && (
-            <p className="text-muted text-sm text-center py-8">
-              Nenhuma operação pendente neste setor.
-            </p>
+      <div className="wrap" style={{ padding: 20, maxWidth: 640, margin: '0 auto' }}>
+        <div className="stack">
+          {podeTrocarSetor && (
+            <div className="hs">
+              {(setores ?? []).map(s => (
+                <Link key={s.id} href={`/apontamento?setor=${s.id}`} className={`pill ${setorAtual === s.id ? 'on' : ''}`}>
+                  {s.nome}
+                </Link>
+              ))}
+            </div>
           )}
+
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 9, background: 'var(--ink2)', color: '#fff',
+            borderRadius: 10, padding: '10px 12px',
+          }}>
+            <div className="bar" style={{ flex: 1, background: 'rgba(255,255,255,.2)' }}>
+              <i style={{ width: `${Math.max(pct, 4)}%`, background: 'var(--amber)' }} />
+            </div>
+            <span style={{ fontSize: 11.5, fontWeight: 700, whiteSpace: 'nowrap' }}>{concluidas} de {todas.length} concluídos</span>
+          </div>
+
+          <div className="stack">
+            {todas.map((op: any) => (
+              <OperacaoCard
+                key={op.id}
+                id={op.id}
+                nome={op.nome}
+                status={op.status}
+                osNumero={op.itens?.ordens_servico?.numero ?? '—'}
+                itemCodigo={op.itens?.codigo ?? '—'}
+                material={op.itens?.material ?? null}
+                unidadeExtra={op.unidade_extra}
+                iniciadoEm={op.iniciado_em}
+              />
+            ))}
+            {todas.length === 0 && <p className="sub" style={{ textAlign: 'center', padding: '32px 0' }}>Nenhuma operação neste setor ainda.</p>}
+          </div>
         </div>
       </div>
-    </main>
+    </AppShell>
   );
 }

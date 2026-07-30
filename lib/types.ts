@@ -37,6 +37,7 @@ export interface OrdemServico {
   desenho: string | null;
   descricao: string | null;
   status: OsStatus;
+  prazo: string | null;
 }
 
 export interface Item {

@@ -1,6 +1,14 @@
 import { createClient } from '@/lib/supabase/server';
-import { AppHeader } from '@/components/app-header';
-import { StatusBadge } from '@/components/status-badge';
+import { AppShell } from '@/components/app-shell';
+
+const OP_ICON: Record<string, string> = { concluido: ' ✓', em_execucao: '', aguardando: '', parado: '' };
+const OP_CLS: Record<string, string> = { concluido: 'ok', em_execucao: 'run', aguardando: 'wait', parado: 'blk' };
+const STATUS_TAG: Record<string, { label: string; cls: string }> = {
+  nao_iniciado: { label: 'NÃO INICIADO', cls: 't-idle' },
+  em_andamento: { label: 'EM EXECUÇÃO', cls: 't-warn' },
+  atencao:      { label: 'ATENÇÃO', cls: 't-warn' },
+  concluido:    { label: 'CONCLUÍDO', cls: 't-ok' },
+};
 
 export default async function OsPage() {
   const supabase = await createClient();
@@ -8,61 +16,89 @@ export default async function OsPage() {
   const { data: ordens } = await supabase
     .from('ordens_servico')
     .select(`
-      id, numero, desenho, descricao, status,
-      itens (
-        id, codigo, quantidade, material,
-        item_operacoes ( id, nome, ordem, status )
-      )
+      id, numero, desenho, descricao, status, prazo,
+      itens ( id, codigo, quantidade, material, ordem,
+        item_operacoes ( id, nome, ordem, status ) )
     `)
     .order('numero');
 
   return (
-    <main className="min-h-screen bg-ice">
-      <AppHeader title="OS por item/operação" />
+    <AppShell>
+      <header className="dtop">
+        <div>
+          <h2>Ordens de serviço</h2>
+          <p>Acompanhamento por item e operação</p>
+        </div>
+      </header>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-3">
-        {(ordens ?? []).map((os: any) => (
-          <details key={os.id} className="bg-white border border-line rounded-2xl overflow-hidden group" open>
-            <summary className="px-5 py-4 flex items-center justify-between gap-3 cursor-pointer list-none">
-              <div>
-                <b className="text-ink">{os.numero}</b>
-                {os.desenho && <em className="text-muted text-sm not-italic ml-2">{os.desenho}</em>}
-                {os.descricao && <p className="text-xs text-muted mt-0.5">{os.descricao}</p>}
-              </div>
-              <StatusBadge status={os.status} />
-            </summary>
-            <div className="border-t border-line divide-y divide-line">
-              {(os.itens ?? [])
-                .sort((a: any, b: any) => a.ordem - b.ordem)
-                .map((item: any) => (
-                  <div key={item.id} className="px-5 py-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-ink">Item {item.codigo} — {item.quantidade} un</span>
-                      <span className="text-muted">{item.material}</span>
+      <div className="wrap" style={{ padding: 20 }}>
+        <div className="stack">
+          {(ordens ?? []).map((os: any) => {
+            const st = STATUS_TAG[os.status];
+            const itens = (os.itens ?? []).sort((a: any, b: any) => a.ordem - b.ordem);
+            return (
+              <div key={os.id} className="card" style={{ overflow: 'hidden' }}>
+                {/* ---------- desktop: cabeçalho + tabela ---------- */}
+                <div className="desktop-only">
+                  <div className="dw">
+                    <div className="dh">
+                      <div><b>{os.numero}</b><em>{os.desenho}{os.descricao ? ` · ${os.descricao}` : ''}</em></div>
+                      <span className={`tag ${st.cls}`}>{st.label}{os.prazo ? ` · prazo ${new Date(os.prazo + 'T00:00:00').toLocaleDateString('pt-BR')}` : ''}</span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                      {(item.item_operacoes ?? [])
-                        .sort((a: any, b: any) => a.ordem - b.ordem)
-                        .map((op: any, i: number) => (
-                          <span key={op.id} className="inline-flex items-center gap-1.5">
-                            {i > 0 && <span className="text-muted">→</span>}
-                            <span className="text-xs text-ink">{op.nome}</span>
-                            <StatusBadge status={op.status} />
-                          </span>
-                        ))}
-                    </div>
+                    {itens.length > 0 ? (
+                      <div style={{ padding: '6px 8px 10px' }}>
+                        <table>
+                          <thead><tr><th>ITEM</th><th>QTD</th><th>MATERIAL</th><th>OPERAÇÕES</th></tr></thead>
+                          <tbody>
+                            {itens.map((it: any) => (
+                              <tr key={it.id}>
+                                <td className="mono">{it.codigo}</td>
+                                <td>{it.quantidade} un</td>
+                                <td>{it.material ?? '—'}</td>
+                                <td>
+                                  <div className="ops">
+                                    {(it.item_operacoes ?? []).sort((a: any, b: any) => a.ordem - b.ordem).map((op: any) => (
+                                      <span key={op.id} className={`op ${OP_CLS[op.status]}`}>{op.nome}{OP_ICON[op.status]}</span>
+                                    ))}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <p className="sub" style={{ padding: '12px 20px' }}>Ainda não iniciado.</p>
+                    )}
                   </div>
-                ))}
-              {(os.itens ?? []).length === 0 && (
-                <p className="px-5 py-3 text-muted text-sm">Ainda não iniciado.</p>
-              )}
-            </div>
-          </details>
-        ))}
-        {(ordens ?? []).length === 0 && (
-          <p className="text-muted text-sm text-center py-8">Nenhuma OS cadastrada ainda.</p>
-        )}
+                </div>
+
+                {/* ---------- mobile: lista ---------- */}
+                <div className="mobile-only">
+                  <div className="ah">
+                    <div><b>{os.numero}</b><em>{os.desenho}</em></div>
+                    <span className={`tag ${st.cls}`}>{st.label}</span>
+                  </div>
+                  <div className="ab" style={{ display: 'block' }}>
+                    {itens.map((it: any) => (
+                      <div key={it.id} className="it">
+                        <div className="r1"><span>Item {it.codigo} — {it.quantidade} un</span><span style={{ color: 'var(--muted)', fontWeight: 600 }}>{it.material}</span></div>
+                        <div className="ops">
+                          {(it.item_operacoes ?? []).sort((a: any, b: any) => a.ordem - b.ordem).map((op: any) => (
+                            <span key={op.id} className={`op ${OP_CLS[op.status]}`}>{op.nome}{OP_ICON[op.status]}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    {itens.length === 0 && <div className="it" style={{ color: 'var(--muted)' }}>Ainda não iniciado.</div>}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          {(ordens ?? []).length === 0 && <p className="sub" style={{ textAlign: 'center', padding: '40px 0' }}>Nenhuma OS cadastrada ainda.</p>}
+        </div>
       </div>
-    </main>
+    </AppShell>
   );
 }

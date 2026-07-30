@@ -26,10 +26,7 @@ export function CadastroUsuarios({ perfis, setores }: Props) {
     start(async () => {
       const res = await criarUsuario({ nome, email, senha, role, setor_id: setorId || undefined });
       if (res.error) setErro(res.error);
-      else {
-        setNome(''); setEmail(''); setSenha(''); setSetorId('');
-        router.refresh();
-      }
+      else { setNome(''); setEmail(''); setSenha(''); setSetorId(''); router.refresh(); }
     });
   }
 
@@ -42,60 +39,53 @@ export function CadastroUsuarios({ perfis, setores }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <form onSubmit={adicionar} className="bg-white border border-line rounded-2xl p-4 flex flex-wrap gap-2 items-end">
+    <div className="stack">
+      <form onSubmit={adicionar} className="card pad" style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'end' }}>
         <div>
-          <label className="text-[11px] text-muted uppercase">Nome</label>
-          <input value={nome} onChange={e => setNome(e.target.value)} required
-            className="bg-ice border border-line rounded-lg px-3 py-2 text-sm mt-1 w-40" />
+          <label className="lab">Nome</label>
+          <input className="field" style={{ width: 160 }} value={nome} onChange={e => setNome(e.target.value)} required />
         </div>
         <div>
-          <label className="text-[11px] text-muted uppercase">Email</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-            className="bg-ice border border-line rounded-lg px-3 py-2 text-sm mt-1 w-48" />
+          <label className="lab">Email</label>
+          <input type="email" className="field" style={{ width: 200 }} value={email} onChange={e => setEmail(e.target.value)} required />
         </div>
         <div>
-          <label className="text-[11px] text-muted uppercase">Senha inicial</label>
-          <input type="password" value={senha} onChange={e => setSenha(e.target.value)} required minLength={6}
-            className="bg-ice border border-line rounded-lg px-3 py-2 text-sm mt-1 w-32" />
+          <label className="lab">Senha inicial</label>
+          <input type="password" className="field" style={{ width: 130 }} value={senha} onChange={e => setSenha(e.target.value)} required minLength={6} />
         </div>
         <div>
-          <label className="text-[11px] text-muted uppercase">Perfil</label>
-          <select value={role} onChange={e => setRole(e.target.value as UserRole)}
-            className="bg-ice border border-line rounded-lg px-3 py-2 text-sm mt-1">
+          <label className="lab">Perfil</label>
+          <select className="field" value={role} onChange={e => setRole(e.target.value as UserRole)}>
             <option value="lider">Líder</option>
             <option value="gestor">Gestor</option>
             <option value="admin">Admin</option>
           </select>
         </div>
         <div>
-          <label className="text-[11px] text-muted uppercase">Setor</label>
-          <select value={setorId} onChange={e => setSetorId(e.target.value)}
-            className="bg-ice border border-line rounded-lg px-3 py-2 text-sm mt-1">
+          <label className="lab">Setor</label>
+          <select className="field" value={setorId} onChange={e => setSetorId(e.target.value)}>
             <option value="">—</option>
             {setores.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
           </select>
         </div>
-        <button disabled={pending} className="py-2 px-4 bg-navy text-white rounded-lg text-sm font-semibold disabled:opacity-40">
-          Criar usuário
-        </button>
+        <button className="btn pri" disabled={pending}>Criar usuário</button>
       </form>
-      {erro && <p className="text-xs text-vermelho">{erro}</p>}
+      {erro && <p style={{ fontSize: 12, color: 'var(--red)' }}>{erro}</p>}
 
-      <div className="bg-white border border-line rounded-2xl divide-y divide-line">
+      <div className="card">
         {perfis.map(p => (
-          <div key={p.id} className="px-4 py-3 flex items-center justify-between gap-3">
+          <div key={p.id} className="res" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <div className="text-sm font-medium text-ink">{p.nome} <span className="text-muted font-normal text-xs">({p.email})</span></div>
-              <div className="text-xs text-muted capitalize">{p.role} · {p.setores?.nome ?? 'sem setor'}</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>{p.nome} <span className="sub" style={{ fontWeight: 400 }}>({p.email})</span></div>
+              <div className="sub" style={{ textTransform: 'capitalize' }}>{p.role} · {p.setores?.nome ?? 'sem setor'}</div>
             </div>
-            <button disabled={pending} onClick={() => alternarAtivo(p)}
-              className={`text-xs font-medium ${p.ativo ? 'text-vermelho' : 'text-verde'}`}>
+            <button disabled={pending} onClick={() => alternarAtivo(p)} className="btn"
+              style={{ padding: '6px 10px', fontSize: 11.5, color: p.ativo ? 'var(--red)' : 'var(--green)' }}>
               {p.ativo ? 'Desativar' : 'Ativar'}
             </button>
           </div>
         ))}
-        {perfis.length === 0 && <p className="px-4 py-4 text-sm text-muted">Nenhum usuário cadastrado ainda.</p>}
+        {perfis.length === 0 && <p className="sub" style={{ padding: 16 }}>Nenhum usuário cadastrado ainda.</p>}
       </div>
     </div>
   );

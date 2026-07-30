@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from 'react';
 import { iniciarOperacao, encerrarOperacao, pararOperacao, retomarOperacao } from '@/app/actions/apontamentos';
-import { StatusBadge } from './status-badge';
 import { MOTIVOS_PARADA } from '@/lib/types';
 
 interface OperacaoCardProps {
@@ -16,12 +15,19 @@ interface OperacaoCardProps {
   iniciadoEm: string | null;
 }
 
+const TAG: Record<string, { label: string; cls: string }> = {
+  aguardando:  { label: 'NÃO INICIADO', cls: 't-idle' },
+  em_execucao: { label: 'EM EXECUÇÃO', cls: 't-warn' },
+  parado:      { label: 'PARADO', cls: 't-bad' },
+  concluido:   { label: 'ENCERRADO', cls: 't-ok' },
+};
+
 export function OperacaoCard(props: OperacaoCardProps) {
-  const [status, setStatus]   = useState(props.status);
-  const [qtd, setQtd]         = useState('');
-  const [medida, setMedida]   = useState('');
-  const [pending, start]      = useTransition();
-  const [erro, setErro]       = useState('');
+  const [status, setStatus] = useState(props.status);
+  const [qtd, setQtd]       = useState('');
+  const [medida, setMedida] = useState('');
+  const [pending, start]    = useTransition();
+  const [erro, setErro]     = useState('');
 
   function run(action: () => Promise<{ error?: string; success?: boolean }>, next?: string) {
     setErro('');
@@ -32,125 +38,68 @@ export function OperacaoCard(props: OperacaoCardProps) {
     });
   }
 
+  const tag = TAG[status];
+  const cls = status === 'em_execucao' ? 'job act' : status === 'concluido' ? 'job fin' : 'job';
+
   return (
-    <div className="bg-white border border-line rounded-2xl p-4 flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-3">
+    <div className={cls}>
+      <div className="r1">
         <div>
-          <div className="font-semibold text-ink text-sm">{props.nome}</div>
-          <div className="text-xs text-muted mt-0.5">
+          <div className="nm">{props.nome}</div>
+          <div className="os">
             OS {props.osNumero} · item {props.itemCodigo}
             {props.material ? ` · ${props.material}` : ''}
           </div>
-          {props.iniciadoEm && status === 'em_execucao' && (
-            <div className="text-[11px] text-muted mt-1">
-              início {new Date(props.iniciadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-            </div>
-          )}
         </div>
-        <StatusBadge status={status} />
+        <span className={`tag ${tag.cls}`}>{tag.label}</span>
       </div>
 
-      {erro && <p className="text-xs text-vermelho">{erro}</p>}
+      {props.iniciadoEm && status === 'em_execucao' && (
+        <div className="tm">início {new Date(props.iniciadoEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+      )}
+
+      {erro && <p style={{ fontSize: 11.5, color: 'var(--red)', marginTop: 8 }}>{erro}</p>}
 
       {status === 'aguardando' && (
-        <div className="flex gap-2">
-          <button
-            disabled={pending}
-            onClick={() => run(() => iniciarOperacao(props.id), 'em_execucao')}
-            className="flex-1 py-2.5 bg-navy text-white rounded-lg text-sm font-semibold disabled:opacity-40"
-          >
-            Iniciar
-          </button>
-          <button
-            disabled={pending}
-            onClick={() => run(() => pararOperacao(props.id, 'Aguard. material'), 'parado')}
-            className="py-2.5 px-4 bg-ice text-ink rounded-lg text-sm font-semibold disabled:opacity-40"
-          >
-            Parada
-          </button>
+        <div className="acts">
+          <button className="go" disabled={pending} onClick={() => run(() => iniciarOperacao(props.id), 'em_execucao')}>Iniciar</button>
+          <button className="halt" disabled={pending} onClick={() => run(() => pararOperacao(props.id, 'Aguard. material'), 'parado')}>Parada</button>
         </div>
       )}
 
       {status === 'em_execucao' && (
         <>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[11px] text-muted uppercase tracking-wide">Qtd concluída</label>
-              <input
-                value={qtd}
-                onChange={e => setQtd(e.target.value)}
-                placeholder="0"
-                inputMode="decimal"
-                className="w-full bg-ice border border-line rounded-lg px-3 py-2 text-sm mt-1"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] text-muted uppercase tracking-wide">
-                {props.unidadeExtra ?? 'Medida'}
-              </label>
-              <input
-                value={medida}
-                onChange={e => setMedida(e.target.value)}
-                placeholder="0"
-                inputMode="decimal"
-                className="w-full bg-ice border border-line rounded-lg px-3 py-2 text-sm mt-1"
-              />
-            </div>
+          <div className="fields">
+            <div><label>QTD CONCLUÍDA</label><input value={qtd} onChange={e => setQtd(e.target.value)} placeholder="0" inputMode="decimal" /></div>
+            <div><label>{props.unidadeExtra ?? 'MEDIDA'}</label><input value={medida} onChange={e => setMedida(e.target.value)} placeholder="0" inputMode="decimal" /></div>
           </div>
-          <div className="flex gap-2">
-            <button
-              disabled={pending}
-              onClick={() => run(
-                () => encerrarOperacao(props.id, qtd ? Number(qtd) : undefined, medida ? Number(medida) : undefined),
-                'concluido'
-              )}
-              className="flex-1 py-2.5 bg-verde text-white rounded-lg text-sm font-semibold disabled:opacity-40"
-            >
+          <div className="acts">
+            <button className="stop" disabled={pending}
+              onClick={() => run(() => encerrarOperacao(props.id, qtd ? Number(qtd) : undefined, medida ? Number(medida) : undefined), 'concluido')}>
               Encerrar
             </button>
-            <button
-              disabled={pending}
-              onClick={() => run(() => pararOperacao(props.id, 'Aguard. material'), 'parado')}
-              className="py-2.5 px-4 bg-ice text-ink rounded-lg text-sm font-semibold disabled:opacity-40"
-            >
-              Parada
-            </button>
+            <button className="halt" disabled={pending} onClick={() => run(() => pararOperacao(props.id, 'Aguard. material'), 'parado')}>Parada</button>
           </div>
         </>
       )}
 
       {status === 'parado' && (
         <>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="motivos">
             {MOTIVOS_PARADA.map(m => (
-              <button
-                key={m}
-                disabled={pending}
-                onClick={() => run(() => pararOperacao(props.id, m))}
-                className="px-2.5 py-1.5 rounded-full text-[11px] font-medium bg-ice text-ink hover:bg-vermelho/10 disabled:opacity-40"
-              >
-                {m}
-              </button>
+              <button key={m} disabled={pending} onClick={() => run(() => pararOperacao(props.id, m))}>{m}</button>
             ))}
           </div>
-          <button
-            disabled={pending}
-            onClick={() => run(() => retomarOperacao(props.id), 'em_execucao')}
-            className="py-2.5 bg-navy text-white rounded-lg text-sm font-semibold disabled:opacity-40"
-          >
-            Retomar
-          </button>
+          <div className="acts" style={{ marginTop: 11 }}>
+            <button className="go" disabled={pending} onClick={() => run(() => retomarOperacao(props.id), 'em_execucao')}>Retomar</button>
+          </div>
         </>
       )}
 
       {status === 'concluido' && (
-        <button
-          disabled={pending}
-          onClick={() => run(() => iniciarOperacao(props.id), 'em_execucao')}
-          className="py-2.5 bg-ice text-ink rounded-lg text-sm font-semibold disabled:opacity-40"
-        >
-          Reabrir
-        </button>
+        <div className="acts">
+          <button className="halt" disabled={pending} onClick={() => run(() => iniciarOperacao(props.id), 'em_execucao')}>Reabrir apontamento</button>
+        </div>
       )}
     </div>
   );

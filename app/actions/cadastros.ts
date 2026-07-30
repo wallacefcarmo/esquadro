@@ -54,6 +54,7 @@ export async function criarOrdemServico(dados: {
   numero: string;
   desenho?: string;
   descricao?: string;
+  prazo?: string;
 }) {
   const supabase = await createClient();
   const numero = dados.numero.trim();
@@ -63,6 +64,7 @@ export async function criarOrdemServico(dados: {
     numero,
     desenho: dados.desenho || null,
     descricao: dados.descricao || null,
+    prazo: dados.prazo || null,
   });
   if (error) return { error: error.code === '23505' ? 'OS já cadastrada.' : error.message };
   revalidatePath('/cadastros');

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
-import { LogoMark } from '@/components/logo-mark';
 
 export default function TrocarSenhaPage() {
   const router = useRouter();
@@ -16,78 +15,46 @@ export default function TrocarSenhaPage() {
     e.preventDefault();
     setErro('');
 
-    if (novaSenha.length < 6) {
-      setErro('A senha deve ter pelo menos 6 caracteres.');
-      return;
-    }
-    if (novaSenha !== confirmar) {
-      setErro('As senhas não coincidem.');
-      return;
-    }
+    if (novaSenha.length < 6) { setErro('A senha deve ter pelo menos 6 caracteres.'); return; }
+    if (novaSenha !== confirmar) { setErro('As senhas não coincidem.'); return; }
 
     setLoading(true);
-
     const { error } = await supabase.auth.updateUser({ password: novaSenha });
-    if (error) {
-      setErro(error.message);
-      setLoading(false);
-      return;
-    }
+    if (error) { setErro(error.message); setLoading(false); return; }
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('perfis').update({ primeiro_acesso: false }).eq('id', user.id);
-    }
+    if (user) await supabase.from('perfis').update({ primeiro_acesso: false }).eq('id', user.id);
 
-    router.push('/');
+    router.push('/painel');
     router.refresh();
   }
 
   return (
-    <main className="min-h-screen bg-ice flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-8">
-          <LogoMark size={40} />
-          <h1 className="font-bold text-xl tracking-wide text-navy mt-3">ESQUADRO</h1>
+    <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ width: '100%', maxWidth: 360 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 28 }}>
+          <div style={{ color: 'var(--ink)', fontSize: 20, fontWeight: 800, letterSpacing: '.3px' }}>ESQUADRO</div>
         </div>
 
-        <div className="bg-white border border-line rounded-2xl p-6 flex flex-col gap-4">
+        <div className="auth-card stack">
           <div>
-            <h2 className="font-semibold text-base tracking-wide text-ink">
-              Definir nova senha
-            </h2>
-            <p className="text-muted text-sm mt-1">
-              Este é seu primeiro acesso. Escolha uma nova senha para continuar.
-            </p>
+            <h2 className="h3">Definir nova senha</h2>
+            <p className="sub" style={{ marginTop: 4 }}>Este é seu primeiro acesso. Escolha uma nova senha para continuar.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <form onSubmit={handleSubmit} className="stack" style={{ gap: 10 }}>
             <input
-              type="password"
-              value={novaSenha}
-              onChange={e => setNovaSenha(e.target.value)}
-              placeholder="Nova senha (mín. 6 caracteres)"
-              required
-              autoComplete="new-password"
-              className="bg-ice border border-line rounded-lg px-4 py-3 text-ink placeholder-muted focus:outline-none focus:border-steel text-sm"
+              type="password" className="field" value={novaSenha} onChange={e => setNovaSenha(e.target.value)}
+              placeholder="Nova senha (mín. 6 caracteres)" required autoComplete="new-password"
             />
             <input
-              type="password"
-              value={confirmar}
-              onChange={e => setConfirmar(e.target.value)}
-              placeholder="Confirmar nova senha"
-              required
-              autoComplete="new-password"
-              className="bg-ice border border-line rounded-lg px-4 py-3 text-ink placeholder-muted focus:outline-none focus:border-steel text-sm"
+              type="password" className="field" value={confirmar} onChange={e => setConfirmar(e.target.value)}
+              placeholder="Confirmar nova senha" required autoComplete="new-password"
             />
 
-            {erro && <p className="text-xs text-vermelho">{erro}</p>}
+            {erro && <p style={{ fontSize: 12, color: 'var(--red)' }}>{erro}</p>}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="py-3 bg-amber text-navy rounded-lg font-semibold tracking-wide hover:opacity-90 disabled:opacity-40 transition-opacity mt-1"
-            >
+            <button type="submit" disabled={loading} className="btn pri block">
               {loading ? '…' : 'SALVAR NOVA SENHA'}
             </button>
           </form>

@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { AppHeader } from '@/components/app-header';
+import { AppShell } from '@/components/app-shell';
 import { CadastroMaquinas } from '@/components/cadastro-maquinas';
 import { CadastroOs } from '@/components/cadastro-os';
 import { CadastroUsuarios } from '@/components/cadastro-usuarios';
@@ -35,25 +35,26 @@ export default async function CadastrosPage({
   }
 
   return (
-    <main className="min-h-screen bg-ice">
-      <AppHeader title="Cadastros" />
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-4">
-        <div className="flex gap-2">
-          {ABAS.map(a => (
-            <Link
-              key={a.id}
-              href={`/cadastros?aba=${a.id}`}
-              className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-                aba === a.id ? 'bg-navy text-white' : 'bg-white border border-line text-ink'
-              }`}
-            >
-              {a.label}
-            </Link>
-          ))}
+    <AppShell>
+      <header className="dtop">
+        <div>
+          <h2>Cadastros</h2>
+          <p>Máquinas, OS/itens e usuários</p>
         </div>
-        {conteudo}
+      </header>
+
+      <div className="wrap" style={{ padding: 20 }}>
+        <div className="stack">
+          <div className="hs">
+            {ABAS.map(a => (
+              <Link key={a.id} href={`/cadastros?aba=${a.id}`} className={`pill ${aba === a.id ? 'on' : ''}`}>
+                {a.label}
+              </Link>
+            ))}
+          </div>
+          {conteudo}
+        </div>
       </div>
-    </main>
+    </AppShell>
   );
 }
