@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { AppShell } from '@/components/app-shell';
 import { RealtimeRefresher } from '@/components/realtime-refresher';
@@ -99,11 +100,21 @@ export default async function PainelPage() {
         <div className="stack">
 
           <div className="kpis">
-            <div className="kpi"><div className="lab">OS EM ABERTO</div><div className="val">{osAbertas ?? 0}</div><div className="note">{osEmAndamento ?? 0} em andamento</div></div>
-            <div className="kpi"><div className="lab">OPERAÇÕES CONCLUÍDAS HOJE</div><div className="val">{concluidosHoje ?? 0}</div><div className="note">itens finalizados</div></div>
-            <div className="kpi"><div className="lab">EM EXECUÇÃO AGORA</div><div className="val" style={{ color: '#8A5D06' }}>{emExecucao ?? 0}</div><div className="note">operações ativas</div></div>
-            <div className="kpi"><div className="lab">MÁQUINAS EM MANUTENÇÃO</div><div className="val" style={{ color: 'var(--red)' }}>{maquinasManutencao ?? 0}</div><div className="note">bloqueadas na programação</div></div>
-            <div className="kpi"><div className="lab">OS EM ATENÇÃO</div><div className="val" style={{ color: 'var(--red)' }}>{obras.filter(o => o.status === 'atencao').length}</div><div className="note">prazo ou avanço crítico</div></div>
+            <Link href="/os" className="kpi" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+              <div className="lab">OS EM ABERTO</div><div className="val">{osAbertas ?? 0}</div><div className="note">{osEmAndamento ?? 0} em andamento</div>
+            </Link>
+            <Link href="/os" className="kpi" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+              <div className="lab">OPERAÇÕES CONCLUÍDAS HOJE</div><div className="val">{concluidosHoje ?? 0}</div><div className="note">itens finalizados</div>
+            </Link>
+            <Link href="/apontamento" className="kpi" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+              <div className="lab">EM EXECUÇÃO AGORA</div><div className="val" style={{ color: '#8A5D06' }}>{emExecucao ?? 0}</div><div className="note">operações ativas</div>
+            </Link>
+            <Link href="/maquinas" className="kpi" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+              <div className="lab">MÁQUINAS EM MANUTENÇÃO</div><div className="val" style={{ color: 'var(--red)' }}>{maquinasManutencao ?? 0}</div><div className="note">bloqueadas na programação</div>
+            </Link>
+            <Link href="/os" className="kpi" style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}>
+              <div className="lab">OS EM ATENÇÃO</div><div className="val" style={{ color: 'var(--red)' }}>{obras.filter(o => o.status === 'atencao').length}</div><div className="note">prazo ou avanço crítico</div>
+            </Link>
           </div>
 
           <div className="card">

@@ -48,3 +48,44 @@ export async function toggleAtivoPerfil(id: string, ativo: boolean) {
   revalidatePath('/cadastros');
   return { success: true };
 }
+
+export interface EditarUsuarioInput {
+  nome: string;
+  role: UserRole;
+  setor_id?: string | null;
+}
+
+export async function editarUsuario(id: string, input: EditarUsuarioInput) {
+  const supabase = await createClient();
+  const nome = input.nome.trim();
+  if (!nome) return { error: 'Nome não pode ser vazio.' };
+
+  const { error } = await supabase
+    .from('perfis')
+    .update({ nome, role: input.role, setor_id: input.setor_id || null })
+    .eq('id', id);
+
+  if (error) return { error: error.message === 'new row violates row-level security policy for table "perfis"' ? 'Sem permissão para editar usuários.' : error.message };
+
+  revalidatePath('/cadastros');
+  return { success: true };
+}
+
+export async function excluirUsuario(id: string) {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Não autenticado.' };
+
+  const { data: perfil } = await supabase.from('perfis').select('role').eq('id', user.id).single();
+  if (perfil?.role !== 'admin') return { error: 'Apenas administradores podem excluir usuários.' };
+
+  if (id === user.id) return { error: 'Você não pode excluir seu próprio usuário.' };
+
+  const { supabaseAdmin } = await import('@/lib/supabase/admin');
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
+  if (error) return { error: error.message };
+
+  revalidatePath('/cadastros');
+  return { success: true };
+}
