@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #F1F4F7;
+  color: #22303D;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
