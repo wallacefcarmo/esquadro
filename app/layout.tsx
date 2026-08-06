@@ -15,6 +15,10 @@ export const metadata: Metadata = {
   title: 'Esquadro — PCP',
   description: 'Gestão de produção da BNG Metalmecânica — PCP, apontamento de chão de fábrica e acompanhamento de OS por item/operação.',
   manifest: '/manifest.webmanifest',
+  icons: {
+    icon: '/icons/icon-192.png',
+    apple: '/icons/icon-180.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',

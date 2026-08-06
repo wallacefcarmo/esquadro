@@ -1,5 +1,5 @@
 const CACHE = 'esquadro-v1';
-const STATIC = ['/manifest.webmanifest', '/icon', '/apple-icon'];
+const STATIC = ['/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(STATIC)).catch(() => {}));
