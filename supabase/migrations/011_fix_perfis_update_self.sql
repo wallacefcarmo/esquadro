@@ -1,4 +1,4 @@
--- 010_fix_perfis_update_self.sql
+-- 011_fix_perfis_update_self.sql
 --
 -- Corrige a política "perfis_update_self" (criada em 002_perfis.sql), que
 -- não tinha WITH CHECK explícito. Sem WITH CHECK, o Postgres reaproveita a

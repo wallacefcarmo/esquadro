@@ -39,7 +39,7 @@ Todas as rotas exigem login (`middleware.ts`), exceto `/login` e `/trocar-senha`
 1. Crie um projeto em https://supabase.com (free tier basta — atenção:
    projetos free pausam por inatividade, é só reativar em **Project → Restore**).
 2. Abra **SQL Editor → New query** e rode os arquivos de `supabase/migrations/`
-   **em ordem numérica** (001 → 009). Cada um é incremental; não pule nenhum:
+   **em ordem numérica** (001 → 011). Cada um é incremental; não pule nenhum:
    - `001_setores.sql` — tabela `setores` + seed dos 4 setores fixos
    - `002_perfis.sql` — tabela `perfis` vinculada ao `auth.users` + RLS
    - `003_maquinas.sql` — tabela `maquinas`
@@ -51,6 +51,10 @@ Todas as rotas exigem login (`middleware.ts`), exceto `/login` e `/trocar-senha`
      genérico que loga INSERT/UPDATE/DELETE das tabelas de cadastro
    - `009_criar_usuario_funcao.sql` — função para criar/ativar usuário sem
      `service_role` no client
+   - `010_ordens_servico_prazo.sql` — coluna `prazo` em `ordens_servico`
+   - `011_fix_perfis_update_self.sql` — corrige RLS de `perfis_update_self`
+     (faltava `WITH CHECK`, permitindo que um usuário alterasse o próprio
+     `role`/`setor_id`/`ativo` via chamada direta à API)
    - Depois rode `supabase/seed.sql` se quiser os dados de demonstração da
      Semana 27 (mesmo cenário do protótipo em `/prototype`).
 3. Crie o primeiro usuário **admin** manualmente (Auth → Add user, depois
